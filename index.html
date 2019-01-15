@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>리빌</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+		<!-- for firebase chat 
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+		-->
+		<style>
+		#aniDiv{
+		  width:10px;
+		  height:10px;
+		  top:154px;
+		  /*background-color:blue;*/
+		  position: absolute;
+		}
+		.aniSpan{
+		  width:100px;
+		  height:30px;
+		  top:154px;
+		  color: white;
+		  /*background-color:darkviolet;*/
+		  position: absolute;
+		}
+		#contDiv{
+		  z-index: 999;
+		  width:500px;
+		  height:500px;
+		  opacity: 0.5;
+		  background-color:coral;
+		}
+		</style>
+		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/5.5.2/firebase.js"></script>
+		<script>
+		// Initialize Firebase
+		// TODO: Replace with your project's customized code snippet
+		var config = {
+		  apiKey: "AIzaSyBsZqlcwVICDysG5eHW8goNuel6_Q2MHxE",
+		  authDomain: "realtimechat-84746.firebaseapp.com",
+		  databaseURL: "https://realtimechat-84746.firebaseio.com",
+		  projectId: "realtimechat-84746",
+		  storageBucket: "realtimechat-84746.appspot.com",
+		  messagingSenderId: "782005892498"
+		};
+		firebase.initializeApp(config);
+		</script>
+		<script>
+		  var cnt = 0;
+		  $(document).ready(function(){      
+			setMovingY(154,600,$("#aniDiv"));
+		  });
+		  firebase.database().ref('/chat').on('value',function(snapshot){
+			  //$("#chatContents").val(snapshot.val().contents);
+			  var keys = Object.keys(snapshot.val()||{});
+			  var lastIdInSnapshot = keys[keys.length - 1];
+			  firebase.database().ref('/chat').orderByKey().startAt(lastIdInSnapshot).on("child_added", function(newMessSnapshot) {
+				if( newMessSnapshot.key === lastIdInSnapshot ) { return; }
+				$("#chatContents").val(newMessSnapshot.val().contents);
+			  });
+			  setMovingX(0,600);
+			  cnt++;
+			},
+			function(error){ 
+			  console.error(error);
+		  });
+		  function getChatAll(){
+			var chatAll;
+			firebase.database().ref('/chat').on('value',function(snapshot){ 
+			  chatAll = snapshot.val();
+			});
+			return chatAll;
+		  }
+		  function setMovingX(startPos,endPos){
+			//var contents = (getChatNewOne()||"");
+			var spanHtml = "<span id='moveSpan"+cnt+"' class='aniSpan' >"+ $("#chatContents").val(); +"</span>";
+			$("#chatContents").val("");
+			console.log(spanHtml);
+			$("#contDiv").append(spanHtml);
+			var elem = $("#moveSpan"+cnt);
+			var pos = startPos;
+			var bot = endPos;
+			var updownFlg = "up";
+			var dir = "left";
+			$(elem).css("top",$("#aniDiv").css("top"));
+			var id = setInterval(moveObj,5);
+			function moveObj(){
+			  if(pos == bot){
+				clearInterval(id);
+				$(elem).remove();
+			  }else{
+				pos++;
+				$(elem).css(dir,pos + "px");
+			  }
+			}
+		  }
+		  function setMovingY(startPos,endPos,obj){
+			var elem = $(obj);
+			var pos = startPos;
+			var bot = endPos;
+			var updownFlg = "up";
+			var dir = "top";
+			var id = setInterval(moveObj,5);
+			function moveObj(){
+			  if(pos == bot){
+				if(bot >= endPos){
+				  bot = startPos;
+				  updownFlg = "down";
+				}else{
+				  bot = endPos;
+				  updownFlg = "up";
+				}
+			  }else{
+				updownFlg=="up"?pos++:pos--;
+				$(elem).css(dir,pos + "px");
+			  }
+			}
+		  }
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>세미나 발표!!</h2>
+					<br>
+					<br>
+					<img src="qr.png">
+					<br>
+					<h6 style="text-align: right;">발표자 : 조한규</h6>
+				</section>
+				<section>
+					<img src="./1.jpeg">
+				</section>
+				<section>
+					<img src="./2.jpeg">
+				</section>
+			</div>
+		</div>
+		  <div id="contDiv">
+			<div id="aniDiv"></div>
+		  </div>
+		  <div>
+			<input type="hidden" id="chatContents">
+		  </div>
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
